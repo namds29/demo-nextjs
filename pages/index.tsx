@@ -1,8 +1,88 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import { useEffect, useState } from 'react';
 import styles from '../styles/Home.module.css'
+import config from "../config.json"
+import Card from '../components/Card';
+import Link from 'next/link';
+import { GetStaticProps, InferGetStaticPropsType } from 'next'
+import { useDispatch } from 'react-redux';
+import { deletePost } from '../redux/postSlice';
 
-export default function Home() {
+interface ListItem {
+  id: number;
+  userId: number;
+  body: string;
+  title: string;
+}
+
+export const getStaticProps: GetStaticProps<{ posts: ListItem[] }> = async () => {
+  const posts = await (await fetch(config.API_URL)).json();
+  return {
+    props: {
+      posts,
+    },
+  }
+}
+export default function Home({ posts }: InferGetStaticPropsType<typeof getStaticProps>) {
+  const [data, setData] = useState<ListItem[]>([]);
+  const [listItem, setListItem] = useState<ListItem[]>([]);
+  const [perPage, setPerpage] = useState(14);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPage, setTotalPage] = useState<number[]>([]);
+  const dispatch = useDispatch();
+
+  const pagination = async (pageNum: number, data: ListItem[]) => {
+    const pageCount = Math.ceil(data.length / perPage);
+    const arrPageNumber: number[] = [];
+    for (let i = 1; i <= pageCount; i++) {
+      arrPageNumber.push(i)
+    }
+    setTotalPage(arrPageNumber)
+    setCurrentPage(pageNum);
+    const prevRange = (pageNum - 1) * perPage;
+    const currRange = pageNum * perPage;
+    setListItem(data.slice(prevRange, currRange));
+  }
+
+  const fetchData = async () => {
+    localStorage.setItem('data', JSON.stringify(posts));
+    setData(posts);
+    pagination(1, posts)
+  }
+  const getData = async () => {
+    const parseData = localStorage.getItem('data');
+    if (typeof parseData === 'string') {
+      const listPost = JSON.parse(parseData);
+      setData(listPost);
+      pagination(1, listPost);
+    }
+  };
+
+
+  //Delete function for call API
+  // const handleDelete = async (userId: number) => {
+  //   await fetch(config.API_URL + '/' + userId, {
+  //     method: 'DELETE',
+  //   }).then((response) => response.json())
+  //     .then(() => getData(1));
+  // }
+
+  //Delete function using local
+  const handleDelete = async (id: number) => {
+    const res = data.filter(data => data.id !== id)
+    setData(res);
+    localStorage.setItem('data', JSON.stringify(res));
+    pagination(1, res);
+    console.log(id);
+    
+    dispatch(deletePost(id))
+  }
+
+  useEffect(() => {
+    if (!localStorage.getItem('data') || localStorage.getItem('data') === '[]' || !data) fetchData();
+    getData();
+  }, [])
   return (
     <div className={styles.container}>
       <Head>
@@ -12,60 +92,25 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+        <div className="w-full flex justify-start">
+          <Link href="/posts/create">
+            <button className='flex justify-center items-center rounded w-8 h-8 bg-lime-400 text-2xl text-white mb-5'>+</button>
+          </Link>
+        </div>
+        <div className="flex flex-wrap gap-5 mb-8">
+          {listItem && listItem.map((item: any) => {
+            return (
+              <Card key={item.title + item.userId} userId={item.userId} id={item.id}
+                title={item.title} body={item.body} handleDelete={handleDelete} />
+            )
+          })}
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.tsx</code>
-        </p>
+        </div>
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+        <div className="flex gap-4 flex-wrap">
+          {totalPage.map(item => <button className='w-8 h-8 bg-cyan-300 rounded text-sm font-semibold' key={item} onClick={() => pagination(item, data)}>{item}</button>)}
         </div>
       </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer>
     </div>
   )
 }
