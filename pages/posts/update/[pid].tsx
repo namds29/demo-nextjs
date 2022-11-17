@@ -3,6 +3,8 @@ import config from "../../../config.json"
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Form from "../../../components/Form";
+import { useAppDispatch } from "../../../redux/hook";
+import { updatePosts } from "../../../redux/postSlice";
 
 type Post = {
     id?: number,
@@ -14,30 +16,22 @@ const UpdatePost = () => {
     const { pid } = router.query;
     const titleRef = useRef<any>();
     const bodyRef = useRef<any>();
-
+    const dispatch = useAppDispatch();
     const [post, setPost] = useState<Post>({
         id: Number(pid),
         title: '',
         body: ''
     });
     const [isSuccess, setIsSuccess] = useState(false);
+    const [isFail, setIsFail] = useState(false);
 
     const fetchData = async () => {
         const data = await (await fetch(config.API_URL + '/' + pid)).json();
         setPost(data);
     }
     const handleUpdatePost = async (title: string, body: string) => {
-        await fetch(`https://jsonplaceholder.typicode.com/posts/${pid}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-                id: pid,
-                title: title,
-                body: body
-            }),
-            headers: {
-                'Content-type': 'application/json; charset=UTF-8',
-            },
-        }).then(res => res.json()).then(() => setIsSuccess(true)).catch(error => console.log(error));
+        const id = Number(pid);
+        dispatch(updatePosts({ id, title, body }))
     }
     const onSubmitForm = (e: any) => {
         e.preventDefault();
@@ -45,7 +39,11 @@ const UpdatePost = () => {
             title: titleRef.current.value,
             body: bodyRef.current.value
         }
-        handleUpdatePost(inputValue.title, inputValue.body);
+        if (!inputValue.title || !inputValue.body) setIsFail(true), setIsSuccess(false);
+        if (inputValue.title && inputValue.body) handleUpdatePost(inputValue.title, inputValue.body)
+        .then(() => { setIsSuccess(true), setIsFail(false) })
+        .catch(err => console.log(err));
+
     }
     useEffect(() => {
         if (!router.isReady) return;
@@ -53,7 +51,7 @@ const UpdatePost = () => {
     }, [router.isReady]);
     return (
         <>
-            <Form headerForm="Update Form" id={post.id} title={post.title} titleRef={titleRef} bodyRef={bodyRef} body={post.body} isSuccess={isSuccess} submitForm={onSubmitForm} />
+            <Form headerForm="Update Form" id={post.id} title={post.title} isFail={isFail} titleRef={titleRef} bodyRef={bodyRef} body={post.body} isSuccess={isSuccess} submitForm={onSubmitForm} />
         </>
     );
 }

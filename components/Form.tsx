@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type Post = {
@@ -6,11 +7,12 @@ type Post = {
     title?: string,
     body?: string,
     isSuccess: boolean,
+    isFail: boolean,
     titleRef?: any;
     bodyRef?: any;
     submitForm: (e: any) => void,
 }
-export default function Form({ headerForm, id, title, body, isSuccess, titleRef, bodyRef, submitForm }: Post) {
+export default function Form({ headerForm, id, title, body, isSuccess,isFail, titleRef, bodyRef, submitForm }: Post) {
     const [txtReport, setTxtReport] = useState('');
     useEffect(() => {
         (headerForm == 'Update Form' && isSuccess) ? setTxtReport('Updated') : setTxtReport('Created')
@@ -19,7 +21,11 @@ export default function Form({ headerForm, id, title, body, isSuccess, titleRef,
         <>
             <div className="flex items-center justify-center h-screen">
                 <div className="mb-8 relative rounded border-slate-300">
+                <Link href="/">
+                    <div className='text-center' > Homepage</div>
+                </Link>
                     <div className="h-full border ">
+                        {isFail && <h1 className="text-center text-lime-600 pt-4 ">{txtReport} Fail</h1>}
                         {isSuccess && <h1 className="text-center text-lime-600 pt-4 ">{txtReport} Successful</h1>}
                         <div className="p-4 text-center text-2xl">{headerForm}</div>
                         <div className="text-center border-b bg-rose-200"></div>
@@ -42,7 +48,6 @@ export default function Form({ headerForm, id, title, body, isSuccess, titleRef,
                     </div>
                 </div>
             </div>
-
         </>
     );
 }

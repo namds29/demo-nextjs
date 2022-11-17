@@ -28,8 +28,12 @@ export default function Posts() {
     return (
         <>
             <div className="flex items-center justify-center h-screen">
+
                 <div>
                     <div className="w-80 h-full border border-slate-300 rounded">
+                        <Link href="/">
+                           <div className='text-center' > Homepage</div>
+                        </Link>
                         <div className="text-center border-b"></div>
                         <h2 className="p-4 border-b"><span className="font-bold">Post</span>: {post?.id}</h2>
                         <h2 className="p-4"><span className="font-bold">Title</span>: <br /> {post?.title}</h2>

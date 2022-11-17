@@ -7,7 +7,7 @@ import Card from '../components/Card';
 import Link from 'next/link';
 import { GetStaticProps, InferGetStaticPropsType } from 'next'
 import { useDispatch } from 'react-redux';
-import { deletePost } from '../redux/postSlice';
+import { deletePost} from '../redux/postSlice';
 
 interface ListItem {
   id: number;
@@ -18,9 +18,10 @@ interface ListItem {
 
 export const getStaticProps: GetStaticProps<{ posts: ListItem[] }> = async () => {
   const posts = await (await fetch(config.API_URL)).json();
+  
   return {
     props: {
-      posts,
+      posts
     },
   }
 }
@@ -92,6 +93,9 @@ export default function Home({ posts }: InferGetStaticPropsType<typeof getStatic
       </Head>
 
       <main className={styles.main}>
+      <Link href="/">
+        Homepage
+      </Link>
         <div className="w-full flex justify-start">
           <Link href="/posts/create">
             <button className='flex justify-center items-center rounded w-8 h-8 bg-lime-400 text-2xl text-white mb-5'>+</button>
